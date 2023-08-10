@@ -45,6 +45,63 @@ def clear_text(event):
         entry.delete(0, "end")
         entry.config(foreground="black")
 
+# tela inicial
+def main_menu(tela=None, menu_frame=None, content_frame=None):
+    #remove o menu da tela se não for a primeira vez que a função é chamada
+    if menu_frame is not None:
+        menu_frame.pack_forget()
+    # Remove the content frame if it exists
+    if content_frame is not None:
+        content_frame.pack_forget()
+
+    # Cria a janela principal se for a primeira vez que a função é chamada
+    if tela is None:
+        tela = tk.Tk() # Cria a janela principal, tela é o nome da janela
+        tela.title("Olimpo Hotel Management System") # Define o título da janela
+        tela.geometry("1080x720") # Define a resolução da janela
+        tela.resizable(False, False) # Impede que a janela seja redimensionada
+
+    # Create the menu frame on the left
+    menu_frame = tk.Frame(tela, bg="gray", width=300)   # Cria um frame para o menu
+    menu_frame.pack(side="left", fill="y") # Define o lado e o preenchimento do frame, y=vertical
+
+    # Create the content frame on the right
+    content_frame = tk.Frame(tela, bg="white", width=780) # Cria um frame para o conteúdo
+    content_frame.pack(side="right", fill="both", expand=True) # Define o lado e o preenchimento do frame, side=right, both=horizontal e vertical, expand=True para expandir o frame
+
+    # Add a label to the menu frame
+    menu_lateral_label = tk.Label(menu_frame, text="   MENU   ", font=("Arial", 18))
+    menu_lateral_label.pack(side="top", pady=10)
+
+    # Create the menu buttons
+    clientes_button = tk.Button(menu_frame, text="Clientes") # Cria um botão para o menu
+    reservas_button = tk.Button(menu_frame, text="Reservas") # Cria um botão para o menu
+    quartos_button = tk.Button(menu_frame, text="Quartos")  # Cria um botão para o menu
+    servicos_button = tk.Button(menu_frame, text="Serviços") # Cria um botão para o menu
+    sair_button = tk.Button(menu_frame, text="Sair", command=tela.quit) # Cria um botão para o menu
+
+    # Add the menu buttons to the menu frame
+    clientes_button.pack(side="top", pady=10, padx=10) # Define o lado e o espaçamento do botão
+    reservas_button.pack(side="top", pady=10, padx=10) #side=lado, pady=espaçamento em y, padx=espaçamento em x
+    quartos_button.pack(side="top", pady=10, padx=10)
+    servicos_button.pack(side="top", pady=10, padx=10)
+    sair_button.pack(side="bottom", pady=10, fill="x") # Define o lado, o espaçamento e o preenchimento do botão
+ 
+    #adiciona função ao botão clientes
+    clientes_button.config(command=lambda: cliente_menu(tela, menu_frame, content_frame)) # Define a função do botão
+    quartos_button.config(command=lambda: quarto_menu(tela, menu_frame, content_frame)) # Define a função do botão
+
+    # Add a label to the content frame
+    content_label = tk.Label(content_frame, text="Olimpo Hotel Management System!", font=("Helvetica", 24))
+    content_label.pack(pady=50) # Define o espaçamento do label
+
+
+    # Start the main loop
+    tela.mainloop() # Inicia o loop principal
+
+
+
+# CLIENTE
 def imprimir_cliente_tabela(content_frame, cliente):
 
     def sort_column(col):
@@ -143,18 +200,75 @@ def imprimir_cliente_acompanhante_tabela(content_frame, cliente):
 
 # Função para imprimir os dados de um cliente em caixas de diálogo editáveis e um botão para excluir
 def imprimir_cliente_editar_excluir(content_frame, cliente):
+    # Limpar todos os widgets existentes no content_frame
+    # for widget in content_frame.winfo_children():
+    #    widget.destroy()
+        
     def salvar_alteracoes():
-        # Adicione aqui a lógica para salvar as alterações feitas nos campos de edição
-        # e atualizar os dados do cliente no banco de dados.
+        try:
+            # Atualize os valores do cliente com base nos campos de edição
+            novo_cpf = cpf_entry.get()
+            if not utils.validar_cpf(novo_cpf):  # Se o CPF não for válido
+                cpf_entry.config(foreground="red")  # Altera a cor do rótulo para vermelho
+                cpf_entry.delete(0, "end") #limpar caixa de entrada
+                cpf_entry.insert(0, "CPF INVÁLIDO") # Exibe uma mensagem de erro
+                return # Retorna para a função anterior
+            '''if utils.cpf_existe(cursor, novo_cpf): # Se o CPF já existir no banco de dados
+                cpf_entry.config(foreground="red")  # Altera a cor do rótulo para vermelho
+                cpf_entry.delete(0, "end") #limpar caixa de entrada
+                cpf_entry.insert(0, "CPF JÁ EXISTE") # Exibe uma mensagem de erro
+                return # Retorna para a função anterior
+            cursor.fetchall() #limpa o cursor'''
 
-        # Exiba uma mensagem de confirmação após salvar as alterações
-        popup_sucesso("As alterações foram salvas com sucesso!")
+            novo_nome = nome_entry.get()
+            if not novo_nome:
+                nome_entry.config(foreground="red")  # Altera a cor do rótulo para vermelho
+                cpf_entry.delete(0, "end") #limpar caixa de entrada
+                nome_entry.insert(0, "NÃO PODE SER NULL") # Exibe uma mensagem de erro
+                return # Retorna para a função anterior
+            
+            novo_telefone = telefone_entry.get()
+            novo_endereco = endereco_entry.get()
+
+            nova_data_nascimento = data_nascimento_entry.get_date()  # Obtém a data do DateEntry
+            if not nova_data_nascimento:
+                data_nascimento_entry.config(foreground="red")
+                cpf_entry.delete(0, "end") #limpar caixa de entrada
+                data_nascimento_entry.insert(0, "NÃO PODE SER NULL")
+                return
+            
+            novo_cpf_titular = cpf_titular_entry.get()
+            if novo_cpf_titular == "":  # Se o CPF do titular for vazio
+                novo_cpf_titular = None  # Defina como None
+            if novo_cpf_titular and not utils.cpf_existe(cursor, novo_cpf_titular): # Se o CPF do titular não existir no banco de dados
+                cpf_titular_entry.config(foreground="red")  # Altera a cor do rótulo para vermelho
+                cpf_titular_entry.delete(0, "end") #limpar caixa de entrada
+                cpf_titular_entry.insert(0, "CPF NÃO EXISTE") # Exibe uma mensagem de erro
+                return # Retorna para a função anterior
+            cursor.fetchall() #limpa o cursor
+
+            # Atualize os valores do cliente com base nos campos de edição
+            cursor.execute('UPDATE cliente SET CPF = %s, Nome_cliente = %s, Telefone_cliente = %s, Endereco_cliente = %s, Data_nasc_cliente = %s, CPF_TITULAR = %s WHERE CPF = %s',
+                        (novo_cpf, novo_nome, novo_telefone, novo_endereco, nova_data_nascimento, novo_cpf_titular, cliente[0]))
+
+            # Exiba uma mensagem de confirmação após salvar as alterações
+            popup_sucesso("As alterações foram salvas com sucesso!")
+
+        except mysql.connector.Error as err:
+            print(err)
+            popup_error(str(err))
 
     def excluir_cliente():
-        # Adicione aqui a lógica para excluir o cliente do banco de dados.
+        try:
+            # Exclua o cliente com base no CPF
+            cursor.execute('DELETE FROM cliente WHERE CPF = %s', (cliente[0],))
 
-        # Exiba uma mensagem de confirmação após excluir o cliente
-        popup_sucesso("O cliente foi excluído com sucesso!")
+            # Exiba uma mensagem de confirmação após excluir o cliente
+            popup_sucesso("O cliente foi excluído com sucesso!")
+
+        except mysql.connector.Error as err:
+            print(err)
+            popup_error(str(err))
 
     # Cria um novo frame para os campos de edição e exclusão
     edit_frame = tk.Frame(content_frame, bg="white")
@@ -186,10 +300,12 @@ def imprimir_cliente_editar_excluir(content_frame, cliente):
     endereco_entry.pack(pady=5)
 
     data_nascimento_label = tk.Label(edit_frame, text="Data de nascimento:")
-    data_nascimento_entry = tk.Entry(edit_frame, width=50)
-    data_nascimento_entry.insert(0, cliente[4] if cliente[4] is not None else "")
+    data_nascimento_entry = tkcalendar.DateEntry(edit_frame, width=12, date_pattern='yyyy/mm/dd', background="gray", foreground="black")
+    data_nascimento_entry.set_date(cliente[4] if cliente[4] is not None else "")
     data_nascimento_label.pack(pady=5)
     data_nascimento_entry.pack(pady=5)
+
+
 
     cpf_titular_label = tk.Label(edit_frame, text="CPF do titular:")
     cpf_titular_entry = tk.Entry(edit_frame, width=50)
@@ -211,59 +327,6 @@ def imprimir_cliente_editar_excluir(content_frame, cliente):
     excluir_button = tk.Button(edit_frame, text="Excluir Cliente", command=excluir_cliente)
     excluir_button.configure(bg="red", fg="white")
     excluir_button.pack(side="right", padx=25, pady=40)
-
-# tela inicial
-def main_menu(tela=None, menu_frame=None, content_frame=None):
-    #remove o menu da tela se não for a primeira vez que a função é chamada
-    if menu_frame is not None:
-        menu_frame.pack_forget()
-    # Remove the content frame if it exists
-    if content_frame is not None:
-        content_frame.pack_forget()
-
-    # Cria a janela principal se for a primeira vez que a função é chamada
-    if tela is None:
-        tela = tk.Tk() # Cria a janela principal, tela é o nome da janela
-        tela.title("Olimpo Hotel Management System") # Define o título da janela
-        tela.geometry("1080x720") # Define a resolução da janela
-        tela.resizable(False, False) # Impede que a janela seja redimensionada
-
-    # Create the menu frame on the left
-    menu_frame = tk.Frame(tela, bg="gray", width=300)   # Cria um frame para o menu
-    menu_frame.pack(side="left", fill="y") # Define o lado e o preenchimento do frame, y=vertical
-
-    # Create the content frame on the right
-    content_frame = tk.Frame(tela, bg="white", width=780) # Cria um frame para o conteúdo
-    content_frame.pack(side="right", fill="both", expand=True) # Define o lado e o preenchimento do frame, side=right, both=horizontal e vertical, expand=True para expandir o frame
-
-    # Add a label to the menu frame
-    menu_lateral_label = tk.Label(menu_frame, text="   MENU   ", font=("Arial", 18))
-    menu_lateral_label.pack(side="top", pady=10)
-
-    # Create the menu buttons
-    clientes_button = tk.Button(menu_frame, text="Clientes") # Cria um botão para o menu
-    reservas_button = tk.Button(menu_frame, text="Reservas") # Cria um botão para o menu
-    quartos_button = tk.Button(menu_frame, text="Quartos")  # Cria um botão para o menu
-    servicos_button = tk.Button(menu_frame, text="Serviços") # Cria um botão para o menu
-    sair_button = tk.Button(menu_frame, text="Sair", command=tela.quit) # Cria um botão para o menu
-
-    # Add the menu buttons to the menu frame
-    clientes_button.pack(side="top", pady=10, padx=10) # Define o lado e o espaçamento do botão
-    reservas_button.pack(side="top", pady=10, padx=10) #side=lado, pady=espaçamento em y, padx=espaçamento em x
-    quartos_button.pack(side="top", pady=10, padx=10)
-    servicos_button.pack(side="top", pady=10, padx=10)
-    sair_button.pack(side="bottom", pady=10, fill="x") # Define o lado, o espaçamento e o preenchimento do botão
- 
-    #adiciona função ao botão clientes
-    clientes_button.config(command=lambda: cliente_menu(tela, menu_frame, content_frame)) # Define a função do botão
-
-    # Add a label to the content frame
-    content_label = tk.Label(content_frame, text="Olimpo Hotel Management System!", font=("Helvetica", 24))
-    content_label.pack(pady=50) # Define o espaçamento do label
-
-
-    # Start the main loop
-    tela.mainloop() # Inicia o loop principal
 
 # tela de clientes
 def cliente_menu(tela, menu_frame, content_frame):
@@ -440,6 +503,11 @@ def cadastrar_cliente_menu(tela, menu_frame, content_frame):
             Endereco_cliente = endereco_entry.get()
 
             Data_nasc_cliente = nascimento_entry.get()
+            if not Data_nasc_cliente:
+                nascimento_entry.config(foreground="red")
+                cpf_entry.delete(0, "end") #limpar caixa de entrada
+                nascimento_entry.insert(0, "NÃO PODE SER NULL")
+                return
 
             CPF_TITULAR = cpf_titular_entry.get() if acompanhante_var.get() == 1 else None # Se o acompanhante for marcado, pegue o CPF do titular
             if CPF_TITULAR == "":  # Se o CPF do titular for vazio
@@ -720,6 +788,381 @@ def listar_acompanhantes_e_clientes(content_frame):
             imprimir_cliente_acompanhante_tabela(content_frame, cliente) # Exibe os dados do cliente em uma tabela
     except Exception as e:
         popup_error(str(e))
+
+
+
+def quarto_menu(tela, menu_frame, content_frame):
+    # Remove the menu frame
+    menu_frame.pack_forget() 
+    #remove o conteúdo da tela
+    content_frame.pack_forget()
+
+    # Create the menu frame on the left
+    menu_quarto_frame = tk.Frame(tela, bg="gray", width=300)   # Cria um frame para o menu
+    menu_quarto_frame.pack(side="left", fill="y") # Define o lado e o preenchimento do frame, y=vertical
+
+    # cria o frame do conteúdo, frame = quadro
+    content_quarto_frame = tk.Frame(tela, bg="white", width=780)
+    content_quarto_frame.pack(side="right", fill="both", expand=True)
+
+    # Adiciona um label ao menu_frame
+    quarto_label = tk.Label(menu_quarto_frame, text="QUARTOS", font=("Arial", 18))
+    quarto_label.pack(side="top", pady=10)
+
+    # cria os botões do menu
+    cadastrar_quarto_button = tk.Button(menu_quarto_frame, text="Cadastrar") # Cria um botão para o menu
+    buscar_quarto_button = tk.Button(menu_quarto_frame, text="Buscar") # Cria um botão para o menu
+    listar_quarto_button = tk.Button(menu_quarto_frame, text="Listar")  # Cria um botão para o menu
+    voltar_quarto_button = tk.Button(menu_quarto_frame, text="Voltar", command=lambda: main_menu(tela, menu_quarto_frame, content_quarto_frame)) # Cria um botão para o menu
+    sair_button = tk.Button(menu_quarto_frame, text="Sair", command=tela.quit) # Cria um botão para o menu
+
+    # adiciona os botões ao menu
+    cadastrar_quarto_button.pack(side="top", pady=10, padx=10) # Define o lado e o espaçamento do botão
+    buscar_quarto_button.pack(side="top", pady=10, padx=10) #side=lado, pady=espaçamento em y, padx=espaçamento em x
+    listar_quarto_button.pack(side="top", pady=10, padx=10)
+    sair_button.pack(side="bottom", pady=10, fill="x") # Define o lado, o espaçamento e o preenchimento do botão
+    voltar_quarto_button.pack(side="bottom", pady=10, fill="x") # Define o lado, o espaçamento e o preenchimento do botão
+
+    #adiciona função dos botões
+    cadastrar_quarto_button.config(command=lambda: cadastrar_quarto_menu(tela, menu_quarto_frame, content_quarto_frame)) # Define a função do botão
+    buscar_quarto_button.config(command=lambda: buscar_quarto_menu(tela, menu_quarto_frame, content_quarto_frame)) # Define a função do botão
+    listar_quarto_button.config(command=lambda: listar_quarto_menu(tela, menu_quarto_frame, content_quarto_frame)) # Define a função do botão
+
+    # adicionar label ao content_frame
+    content_label = tk.Label(content_quarto_frame, text="Olimpo Hotel Management System!", font=("Helvetica", 24))
+    content_label.pack(pady=50) # Define o espaçamento do label
+
+#tela de cadastrar quarto
+def cadastrar_quarto_menu(tela, menu_quarto_frame, content_quarto_frame):
+    # remove o menu frame
+    menu_quarto_frame.pack_forget()
+    # remove o conteúdo da tela
+    content_quarto_frame.pack_forget()
+
+    # cria o menu frame
+    menu_quarto_frame = tk.Frame(tela, bg="gray", width=300)
+    menu_quarto_frame.pack(side="left", fill="y")
+
+    # cria o frame do conteúdo
+    content_quarto_frame = tk.Frame(tela, bg="white", width=780)
+    content_quarto_frame.pack(side="right", fill="both", expand=True)
+
+    # adiciona um label ao menu_frame
+    quarto_label = tk.Label(menu_quarto_frame, text="CADASTRAR\nQUARTO", font=("Arial", 18))
+    quarto_label.pack(side="top", pady=10)
+
+    # cria os botões do menu
+    cadastrar_quarto_button = tk.Button(menu_quarto_frame, text="Cadastrar")
+    cadastrar_quarto_button.configure(bg="black", fg="white")
+    buscar_quarto_button = tk.Button(menu_quarto_frame, text="Buscar")
+    listar_quarto_button = tk.Button(menu_quarto_frame, text="Listar")
+    voltar_quarto_button = tk.Button(menu_quarto_frame, text="Voltar", command=lambda: main_menu(tela, menu_quarto_frame, content_quarto_frame))
+    sair_button = tk.Button(menu_quarto_frame, text="Sair", command=tela.quit)
+
+    # adiciona os botões ao menu
+    cadastrar_quarto_button.pack(side="top", pady=10, padx=10)
+    buscar_quarto_button.pack(side="top", pady=10, padx=10)
+    listar_quarto_button.pack(side="top", pady=10, padx=10)
+    sair_button.pack(side="bottom", pady=10, fill="x")
+    voltar_quarto_button.pack(side="bottom", pady=10, fill="x")
+
+    # adiciona função dos botões
+    buscar_quarto_button.config(command=lambda: buscar_quarto_menu(tela, menu_quarto_frame, content_quarto_frame))
+    listar_quarto_button.config(command=lambda: listar_quarto_menu(tela, menu_quarto_frame, content_quarto_frame))
+
+    # cria as caixas de diálogo
+    numero_label = tk.Label(content_quarto_frame, text="Número do quarto:")
+    numero_entry = tk.Entry(content_quarto_frame, width=50)
+    numero_entry.default_text = "123"  # Texto padrão
+    numero_entry.insert(0, numero_entry.default_text)
+    numero_entry.config(foreground="gray")
+    numero_label.pack(pady=5)  # Espaçamento entre o rótulo e a caixa de entrada
+    numero_entry.pack(pady=5)  # Espaçamento entre as caixas de entrada
+    numero_entry.bind("<FocusIn>", clear_text) # Limpa o texto padrão da caixa de entrada quando ela recebe o foco
+
+    tipo_label = tk.Label(content_quarto_frame, text="Tipo do quarto:")
+    tipo_entry = tk.Entry(content_quarto_frame, width=50)
+    tipo_entry.default_text = "Simples"  # Texto padrão
+    tipo_entry.insert(0, tipo_entry.default_text)
+    tipo_entry.config(foreground="gray")
+    tipo_label.pack(pady=5)
+    tipo_entry.pack(pady=5)
+    tipo_entry.bind("<FocusIn>", clear_text) # Limpa o texto padrão da caixa de entrada quando ela recebe o foco
+
+    capacidade_label = tk.Label(content_quarto_frame, text="Capacidade do quarto:")
+    capacidade_entry = tk.Entry(content_quarto_frame, width=50)
+    capacidade_entry.default_text = "1"  # Texto padrão
+    capacidade_entry.insert(0, capacidade_entry.default_text)
+    capacidade_entry.config(foreground="gray")
+    capacidade_label.pack(pady=5)
+    capacidade_entry.pack(pady=5)
+    capacidade_entry.bind("<FocusIn>", clear_text) # Limpa o texto padrão da caixa de entrada quando ela recebe o foco
+
+    valor_label = tk.Label(content_quarto_frame, text="Valor do quarto:")
+    valor_entry = tk.Entry(content_quarto_frame, width=50)
+    valor_entry.default_text = "100.00"  # Texto padrão
+    valor_entry.insert(0, valor_entry.default_text)
+    valor_entry.config(foreground="gray")
+    valor_label.pack(pady=5)
+    valor_entry.pack(pady=5)
+    valor_entry.bind("<FocusIn>", clear_text) # Limpa o texto padrão da caixa de entrada quando ela recebe o foco
+
+    # Função para salvar os dados no banco de dados
+    def save_to_database_quarto():
+        try:
+            numero_quarto = numero_entry.get()
+            #testar se não é vazio, se é float e se ja existe
+            if not numero_quarto:
+                numero_entry.config(foreground="red")
+                numero_entry.delete(0, "end")
+                numero_entry.insert(0, "NÃO PODE SER NULL")
+                return
+            if not numero_quarto.isnumeric():
+                numero_entry.config(foreground="red")
+                numero_entry.delete(0, "end")
+                numero_entry.insert(0, "NÃO PODE CONTER LETRAS")
+                return
+            if utils.quarto_existe(cursor, numero_quarto):
+                numero_entry.config(foreground="red")
+                numero_entry.delete(0, "end")
+                numero_entry.insert(0, "QUARTO JÁ EXISTE")
+                return
+            cursor.fetchall()
+
+            tipo_quarto = tipo_entry.get()
+            if not tipo_quarto:
+                tipo_entry.config(foreground="red")
+                tipo_entry.delete(0, "end")
+                tipo_entry.insert(0, "NÃO PODE SER NULL")
+                return
+            
+            capacidade_quarto = capacidade_entry.get()
+            if not capacidade_quarto:
+                capacidade_entry.config(foreground="red")
+                capacidade_entry.delete(0, "end")
+                capacidade_entry.insert(0, "NÃO PODE SER NULL")
+                return
+            if not capacidade_quarto.isnumeric():
+                capacidade_entry.config(foreground="red")
+                capacidade_entry.delete(0, "end")
+                capacidade_entry.insert(0, "NÃO PODE CONTER LETRAS")
+                return
+            
+            valor_quarto = valor_entry.get()
+            if not valor_quarto:
+                valor_entry.config(foreground="red")
+                valor_entry.delete(0, "end")
+                valor_entry.insert(0, "NÃO PODE SER NULL")
+                return
+            if not valor_quarto.isnumeric():
+                valor_entry.config(foreground="red")
+                valor_entry.delete(0, "end")
+                valor_entry.insert(0, "NÃO PODE CONTER LETRAS")
+                return
+            
+            # Insere os dados na tabela
+            cursor.execute('INSERT INTO quarto (Numero_quarto, Tipo_quarto, Capacidade_quarto, Valor_quarto) VALUES (%s, %s, %s, %s)',
+                         (numero_quarto, tipo_quarto, capacidade_quarto, valor_quarto))  # Executa o comando SQL
+            db.commit()  # Salva as alterações no banco de dados
+
+            # Exibe uma mensagem de sucesso com um popup e retorna para o menu de quartos
+            popup_sucesso("Quarto cadastrado com sucesso!") # Exibe uma mensagem de sucesso
+            quarto_menu(tela, menu_quarto_frame, content_quarto_frame) # Retorna para o menu de quartos
+            
+        except Exception as e:
+            popup_error(str(e))
+            main_menu(tela, menu_quarto_frame, content_quarto_frame)
+
+
+    salvar_button = tk.Button(content_quarto_frame, text="SALVAR", command=save_to_database_quarto)
+    salvar_button.configure(bg="blue", fg="white")
+    salvar_button.pack(pady=50)
+
+
+#tela de buscar quarto
+def buscar_quarto_menu(tela, menu_quarto_frame, content_quarto_frame):
+    #remove o menu frame
+    menu_quarto_frame.pack_forget()
+    #remove o conteúdo da tela
+    content_quarto_frame.pack_forget()
+
+    # cria o menu frame
+    menu_quarto_frame = tk.Frame(tela, bg="gray", width=300)
+    menu_quarto_frame.pack(side="left", fill="y")
+
+    # cria o frame do conteúdo
+    content_quarto_frame = tk.Frame(tela, bg="white", width=780)
+    content_quarto_frame.pack(side="right", fill="both", expand=True)
+
+    # adiciona um label ao menu_frame
+    quarto_label = tk.Label(menu_quarto_frame, text="BUSCAR\nQUARTO", font=("Arial", 18))
+    quarto_label.pack(side="top", pady=10)
+
+    # cria os botões do menu
+    cadastrar_quarto_button = tk.Button(menu_quarto_frame, text="Cadastrar")
+    buscar_quarto_button = tk.Button(menu_quarto_frame, text="Buscar")
+    buscar_quarto_button.configure(bg="black", fg="white")
+    listar_quarto_button = tk.Button(menu_quarto_frame, text="Listar")
+    voltar_quarto_button = tk.Button(menu_quarto_frame, text="Voltar", command=lambda: main_menu(tela, menu_quarto_frame, content_quarto_frame))
+    sair_button = tk.Button(menu_quarto_frame, text="Sair", command=tela.quit)
+
+    # adiciona os botões ao menu
+    cadastrar_quarto_button.pack(side="top", pady=10, padx=10)
+    buscar_quarto_button.pack(side="top", pady=10, padx=10)
+    listar_quarto_button.pack(side="top", pady=10, padx=10)
+    sair_button.pack(side="bottom", pady=10, fill="x")
+    voltar_quarto_button.pack(side="bottom", pady=10, fill="x")
+
+    # adiciona função dos botões
+    cadastrar_quarto_button.config(command=lambda: cadastrar_quarto_menu(tela, menu_quarto_frame, content_quarto_frame))
+    listar_quarto_button.config(command=lambda: listar_quarto_menu(tela, menu_quarto_frame, content_quarto_frame))
+
+    # cria uma caixa de seleção com as opções de busca, CPF e nome ao lado da caixa de entrada, e abaixo um botão para buscar
+    buscar_label = tk.Label(content_quarto_frame, text="Buscar por:")
+    buscar_label.pack(pady=5)
+    buscar_var = tk.StringVar()
+    buscar_combobox = tk.ttk.Combobox(content_quarto_frame, width=12, textvariable=buscar_var, state="readonly")
+    buscar_combobox["values"] = ["Número", "Tipo"]
+    buscar_combobox.current(0)  # Define o valor padrão
+    buscar_combobox.pack(pady=5)
+    
+    buscar_entry = tk.Entry(content_quarto_frame, width=50)
+    buscar_entry.default_text = "123"  # Texto padrão
+    buscar_entry.insert(0, buscar_entry.default_text)
+    buscar_entry.config(foreground="gray")
+    buscar_entry.pack(pady=5)
+    buscar_entry.bind("<FocusIn>", clear_text) # Limpa o texto padrão da caixa de entrada quando ela recebe o foco
+
+    # Função para buscar os dados no banco de dados
+    def search_in_database_quarto():
+        try:
+            if buscar_entry.get() == "Número":
+                numero_quarto = buscar_entry.get()
+                if not numero_quarto:
+                    buscar_entry.config(foreground="red")
+                    buscar_entry.delete(0, "end")
+                    buscar_entry.insert(0, "NÃO PODE SER NULL")
+                    return
+                if not numero_quarto.isnumeric():
+                    buscar_entry.config(foreground="red")
+                    buscar_entry.delete(0, "end")
+                    buscar_entry.insert(0, "NÃO PODE CONTER LETRAS")
+                    return
+                if not utils.quarto_existe(cursor, numero_quarto):
+                    buscar_entry.config(foreground="red")
+                    buscar_entry.delete(0, "end")
+                    buscar_entry.insert(0, "QUARTO NÃO ENCONTRADO")
+                    return
+                cursor.fetchall()
+
+                cursor.execute('SELECT COUNT(*) FROM quarto WHERE Numero_quarto = %s', (numero_quarto,))
+                count = cursor.fetchone()[0]
+                cursor.execute('SELECT * FROM quarto WHERE Numero_quarto = %s', (numero_quarto,))
+
+                if count > 1:
+                    quarto = cursor.fetchall()
+                    imprimir_quarto_tabela(content_quarto_frame, quarto)
+                else:
+                    quarto = cursor.fetchone()
+                    imprimir_quarto_editar_excluir(content_quarto_frame, quarto)
+
+            elif buscar_entry.get() == "Tipo":
+                tipo_quarto = buscar_entry.get()
+                if not tipo_quarto:
+                    buscar_entry.config(foreground="red")
+                    buscar_entry.delete(0, "end")
+                    buscar_entry.insert(0, "NÃO PODE SER NULL")
+                    return
+                if not utils.tipo_quarto_existe(cursor, tipo_quarto):
+                    buscar_entry.config(foreground="red")
+                    buscar_entry.delete(0, "end")
+                    buscar_entry.insert(0, "TIPO NÃO ENCONTRADO")
+                    return
+
+                cursor.execute('SELECT COUNT(*) FROM quarto WHERE Tipo_quarto = %s', (tipo_quarto,))
+                count = cursor.fetchone()[0]
+                cursor.execute('SELECT * FROM quarto WHERE Tipo_quarto = %s', (tipo_quarto,))
+
+                if count > 1:
+                    quarto = cursor.fetchall()
+                    imprimir_quarto_tabela(content_quarto_frame, quarto)
+                else:
+                    quarto = cursor.fetchone()
+                    imprimir_quarto_editar_excluir(content_quarto_frame, quarto)
+
+        # Caso ocorra algum erro
+        except Exception as e:
+            popup_error(str(e))
+            main_menu(tela, menu_quarto_frame, content_quarto_frame)
+
+    buscar_button = tk.Button(content_quarto_frame, text="BUSCAR", command=search_in_database_quarto)
+    buscar_button.configure(bg="blue", fg="white")
+    buscar_button.pack(pady=15)
+
+
+#tela de listar quarto 
+def listar_quarto_menu(tela, menu_quarto_frame, content_quarto_frame):
+    # Remove the menu frame
+    menu_quarto_frame.pack_forget()
+    #remove o conteúdo da tela
+    content_quarto_frame.pack_forget()
+
+    # Create the menu frame on the left
+    menu_quarto_frame = tk.Frame(tela, bg="gray", width=300)   # Cria um frame para o menu
+    menu_quarto_frame.pack(side="left", fill="y") # Define o lado e o preenchimento do frame, y=vertical
+
+    # cria o frame do conteúdo, frame = quadro
+    content_quarto_frame = tk.Frame(tela, bg="white", width=780)
+    content_quarto_frame.pack(side="right", fill="both", expand=True)
+
+    # Adiciona um label ao menu_frame
+    quarto_label = tk.Label(menu_quarto_frame, text="LISTAR\nQUARTOS", font=("Arial", 18))
+    quarto_label.pack(side="top", pady=10)
+
+    # cria os botões do menu
+    cadastrar_quarto_button = tk.Button(menu_quarto_frame, text="Cadastrar") # Cria um botão para o menu
+    buscar_quarto_button = tk.Button(menu_quarto_frame, text="Buscar") # Cria um botão para o menu
+    listar_quarto_button = tk.Button(menu_quarto_frame, text="Listar")  # Cria um botão para o menu
+    listar_quarto_button.configure(bg="black", fg="white") # Altera a cor do botão
+    voltar_quarto_button = tk.Button(menu_quarto_frame, text="Voltar", command=lambda: main_menu(tela, menu_quarto_frame, content_quarto_frame)) # Cria um botão para o menu
+    sair_button = tk.Button(menu_quarto_frame, text="Sair", command=tela.quit) # Cria um botão para o menu
+
+    # adiciona os botões ao menu
+    cadastrar_quarto_button.pack(side="top", pady=10, padx=10) # Define o lado e o espaçamento do botão
+    buscar_quarto_button.pack(side="top", pady=10, padx=10) #side=lado, pady=espaçamento em y, padx=espaçamento em x
+    listar_quarto_button.pack(side="top", pady=10, padx=10)
+    sair_button.pack(side="bottom", pady=10, fill="x") # Define o lado, o espaçamento e o preenchimento do botão
+    voltar_quarto_button.pack(side="bottom", pady=10, fill="x") # Define o lado
+
+    #adiciona função dos botões
+    cadastrar_quarto_button.config(command=lambda: cadastrar_quarto_menu(tela, menu_quarto_frame, content_quarto_frame)) # Define a função do botão
+    buscar_quarto_button.config(command=lambda: buscar_quarto_menu(tela, menu_quarto_frame, content_quarto_frame)) # Define a função do botão
+
+    #adicionar 3 botões no topo do content_frame para listar todos os quartos, listar quartos simples e listar quartos duplos
+    listar_todos_button = tk.Button(content_quarto_frame, text="Listar todos", command=lambda: listar_todos_quartos(content_quarto_frame))
+    listar_todos_button.pack(side="top", pady=10, padx=10, fill="x")
+
+
+def listar_todos_quartos(content_quarto_frame):
+    try:
+        cursor.execute('SELECT COUNT(*) FROM quarto')
+        count = cursor.fetchone()[0]
+
+        if count < 1: # Se não houver quartos
+            popup_error("Não há quartos!") # Exibe uma mensagem de erro
+        else:
+            cursor.fetchall() #limpa o cursor
+            cursor.execute('SELECT * FROM quarto')  # Executa o comando SQL
+            quarto = cursor.fetchall()  # Pega os dados do quarto
+            imprimir_quarto_tabela(content_quarto_frame, quarto)
+
+    except Exception as e:
+        popup_error(str(e)) # Exibe uma mensagem de erro
+
+        
+
+
+            
 
 # Start the main menu
 main_menu()
