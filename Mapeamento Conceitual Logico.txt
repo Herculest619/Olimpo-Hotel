@@ -1,0 +1,31 @@
+CLIENTE (CPF, Nome_cliente, Telefone_cliente, Endereco_cliente, Data_nasc_cliente, CPF_TITULAR)
+    ° CPF é chave primária
+
+    ° CPF_TITULAR referencia CLIENTE (CPF)
+
+
+QUARTO(Numero_quarto, Tipo_quarto, Capacidade_quarto, Valor_quarto)
+    ° Numero_quarto é chave primária
+
+SERVICO(Nome_servico, Valor_servico)
+    ° Nome_servico é chave primária
+
+
+RESERVA(ID_reserva, Data_check_in_reserva, Data_check_out_reserva, CLIENTE)
+    ° ID_reserva é chave primária
+
+    ° CLIENTE referencia CLIENTE (CPF)
+
+
+ALOCA(Numero_quarto, ID_reserva)
+    ° (Numero_quarto, ID_reserva) é chave primária
+
+    ° Numero_quarto referencia QUARTO (Numero_quarto)
+    ° ID_reserva referencia RESERVA (ID_reserva)
+
+
+POSSUI(Nome_servico, ID_reserva, Quantidade_servico)
+    ° (Nome_servico, ID_reserva) é chave primária
+
+    ° Nome_servico referencia SERVICO (Nome_servico)
+    ° ID_reserva referencia RESERVA (ID_reserva)

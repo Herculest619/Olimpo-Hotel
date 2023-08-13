@@ -19,7 +19,7 @@ def cpf_existe(cursor, cpf):
 # Função validar data
 def validar_data(data):
     try:
-        datetime.strptime(data, '%Y-%m-%d') # Converte a data para o formato ano-mês-dia
+        datetime.strptime(str(data), '%Y-%m-%d')  # Converte o objeto datetime.date para string e depois faz a conversão
         return True
     except ValueError:
         return False
@@ -101,3 +101,11 @@ def imprime_reserva_individual(linha):
     print("Valor da quarto: ", linha[5])
     print("Valor do serviço: ", linha[6])
     print("\n")
+
+def buscar_reserva_por_cpf(cursor, cpf_cliente):
+    cursor.execute('SELECT * FROM RESERVA R, ALOCA A WHERE R.ID_reserva = A.ID_reserva AND R.CLIENTE = %s', (cpf_cliente,))
+    return cursor.fetchall()
+
+def buscar_reserva_por_data(cursor, data):
+    cursor.execute('SELECT * FROM RESERVA WHERE Data_check_in_reserva <= %s AND Data_check_out_reserva >= %s', (data, data))
+    return cursor.fetchall()
