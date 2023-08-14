@@ -654,11 +654,11 @@ def buscar_cliente_menu(tela, menu_frame, content_frame):
                     buscar_entry.delete(0, "end")
                     buscar_entry.insert(0, "NOME NÃO ENCONTRADO")
                     return
+                cursor.fetchall()
 
                 cursor.execute('SELECT COUNT(*) FROM cliente WHERE Nome_cliente = %s', (Nome_cliente,))
                 count = cursor.fetchone()[0]
                 cursor.execute('SELECT * FROM cliente WHERE Nome_cliente = %s', (Nome_cliente,))
-                
 
                 # Exibe os dados de varios clientes em uma tabela em um frame na tela de busca, cada cliente em uma linha, caso haja mais de um cliente com o mesmo nome
                 if count > 1: #conta quantos clientes tem o mesmo nome
@@ -2482,6 +2482,7 @@ def imprimir_reserva_servico_tabela(content_reserva_frame, reserva):
         quantidade_servico = i[7] if i[7] is not None else ""
 
         table.insert("", "end", values=(id, data_check_in, data_check_out, cpf, nome, numero_quarto, nome_servico, quantidade_servico))
+
 
 # Start the main menu
 main_menu()
